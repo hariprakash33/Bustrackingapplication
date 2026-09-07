@@ -387,6 +387,7 @@ const LoginPage = () => {
 
             if (data.success) {
                 localStorage.setItem('token', data.data.token);
+                localStorage.setItem('userType', data.data.role);
                 localStorage.setItem('user', JSON.stringify(data.data));
 
                 if (data.data.role === 'admin') {

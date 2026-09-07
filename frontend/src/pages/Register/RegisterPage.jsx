@@ -70,32 +70,43 @@ const RegisterPage = () => {
 
             const data = await response.json();
 
-            if (response.ok) {
+            if (response.ok && data.success) {
                 console.log('Registration successful!', data);
 
-                // Auto-login after successful registration
-                const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        password: formData.password,
-                        userType: formData.userType
-                    }),
-                });
+                let authData = data.data;
 
-                const loginData = await loginResponse.json();
+                if (!authData || !authData.token) {
+                    // Auto-login after successful registration
+                    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: formData.email,
+                            password: formData.password,
+                            userType: formData.userType
+                        }),
+                    });
 
-                if (loginResponse.ok) {
-                    localStorage.setItem('token', loginData.token);
-                    localStorage.setItem('userType', formData.userType);
-                    localStorage.setItem('user', JSON.stringify(loginData.user));
+                    const loginData = await loginResponse.json();
 
-                    // Redirect based on user type
-                    if (formData.userType === 'driver') {
+                    if (loginResponse.ok && loginData.success) {
+                        authData = loginData.data;
+                    }
+                }
+
+                if (authData && authData.token) {
+                    const userRole = authData.role || formData.userType;
+                    localStorage.setItem('token', authData.token);
+                    localStorage.setItem('userType', userRole);
+                    localStorage.setItem('user', JSON.stringify(authData));
+
+                    // Redirect based on user type / role
+                    if (userRole === 'driver') {
                         navigate('/driver-dashboard');
+                    } else if (userRole === 'admin') {
+                        navigate('/admin/dashboard');
                     } else {
                         navigate('/user-dashboard');
                     }
